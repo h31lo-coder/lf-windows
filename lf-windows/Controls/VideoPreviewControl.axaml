@@ -1,0 +1,140 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+             xmlns:models="clr-namespace:LfWindows.Models"
+             xmlns:vm="clr-namespace:LfWindows.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="LfWindows.Controls.VideoPreviewControl"
+             x:DataType="models:VideoPreviewModel"
+             x:Name="Root">
+    <Grid Background="Black">
+        <!-- Video Frame -->
+        <LayoutTransformControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <LayoutTransformControl.LayoutTransform>
+                <RotateTransform Angle="{Binding #Root.RotationAngle}"/>
+            </LayoutTransformControl.LayoutTransform>
+            <Image x:Name="VideoImage" Source="{Binding VideoFrame}" Stretch="Uniform" />
+        </LayoutTransformControl>
+        
+        <!-- Click Area for Play/Pause -->
+        <Panel Background="Transparent" IsHitTestVisible="True" PointerPressed="OnPanelPointerPressed">
+            <Panel.Styles>
+                <Style Selector="Panel">
+                    <Setter Property="Cursor" Value="Hand"/>
+                </Style>
+            </Panel.Styles>
+        </Panel>
+
+        <!-- Play/Pause Overlay -->
+        <Button Command="{Binding TogglePlayCommand}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="Transparent"
+                BorderThickness="0"
+                Width="120" Height="120"
+                ClipToBounds="False"
+                IsVisible="{Binding ShowPlayButton}">
+            <Button.Template>
+                <ControlTemplate>
+                    <Border x:Name="PlayBorder" 
+                            Width="80" Height="80" 
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            CornerRadius="40" 
+                            Background="#66000000">
+                        <Border.Transitions>
+                            <Transitions>
+                                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1"/>
+                            </Transitions>
+                        </Border.Transitions>
+                        <PathIcon Data="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.69L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" 
+                                  Width="32" Height="32" 
+                                  Foreground="White" 
+                                  Margin="4,0,0,0"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+            <Button.Styles>
+                <Style Selector="Button:pointerover /template/ Border#PlayBorder">
+                    <Setter Property="Background" Value="#99000000"/>
+                    <Setter Property="RenderTransform" Value="scale(1.1)"/>
+                </Style>
+            </Button.Styles>
+        </Button>
+
+        <!-- Controls Overlay -->
+        <Grid VerticalAlignment="Bottom" Margin="20,0,20,20" ColumnDefinitions="*, Auto">
+            <!-- Progress Slider -->
+            <Slider Name="ProgressSlider" 
+                    Grid.Column="0" 
+                    Margin="0,0,15,0" 
+                    Maximum="1.0"
+                    VerticalAlignment="Center"
+                    MinHeight="20">
+                <Slider.Styles>
+                    <Style Selector="Slider">
+                        <Setter Property="Background" Value="#40FFFFFF"/>
+                        <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAccentBrush}"/>
+                    </Style>
+                    
+                    <!-- Completely replace Thumb template to remove all default animations/states -->
+                    <!-- Hit area is 20x20, Visual is 8x8 centered -->
+                    <Style Selector="Slider /template/ Thumb">
+                        <Setter Property="Width" Value="20"/>
+                        <Setter Property="Height" Value="20"/>
+                        <Setter Property="Template">
+                            <ControlTemplate>
+                                <Panel Background="Transparent">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="4"
+                                            Width="8"
+                                            Height="8"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                                </Panel>
+                            </ControlTemplate>
+                        </Setter>
+                    </Style>
+
+                    <!-- Completely replace Track (RepeatButton) template to remove animations -->
+                    <!-- Hit area is 20px high, Visual track is 4px high centered -->
+                    <Style Selector="Slider /template/ RepeatButton">
+                        <Setter Property="Height" Value="20"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="Template">
+                            <ControlTemplate>
+                                <Grid Background="Transparent">
+                                    <Border Background="{TemplateBinding Background}"
+                                            Height="4"
+                                            VerticalAlignment="Center"
+                                            CornerRadius="2"/>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter>
+                    </Style>
+                </Slider.Styles>
+            </Slider>
+            
+            <!-- Mute Button -->
+            <Button Grid.Column="1"
+                    Command="{Binding ToggleMuteCommand}"
+                    Background="#40000000"
+                    CornerRadius="20"
+                    Padding="10">
+                <Panel>
+                    <!-- Sound On Icon (Visible when NOT muted) -->
+                    <PathIcon Data="M11,5L6,9H2V15H6L11,19V5Z M15.5,12C15.5,10.23 14.61,8.71 13.26,7.97V16.02C14.61,15.29 15.5,13.77 15.5,12Z M13.26,3.7V5.71C16.53,6.65 19,9.67 19,13.28C19,16.9 16.53,19.92 13.26,20.86V22.87C17.64,21.87 21,17.96 21,13.28C21,8.61 17.64,4.7 13.26,3.7Z" 
+                              IsVisible="{Binding IsSoundOn}"
+                              Foreground="White"/>
+                    <!-- Mute Icon (Visible when Muted) -->
+                    <PathIcon Data="M16.5,12C16.5,10.23 15.61,8.71 14.26,7.97V10.18L16.45,12.36C16.48,12.24 16.5,12.12 16.5,12Z M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 17.97,4.16 14,3.23V5.29C16.89,6.15 19,8.83 19,12Z M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73L4.27,3Z M12,4L9.91,6.09L12,8.18V4Z" 
+                              IsVisible="{Binding IsMuted}"
+                              Foreground="#FF6B6B"/>
+                </Panel>
+            </Button>
+        </Grid>
+    </Grid>
+</UserControl>

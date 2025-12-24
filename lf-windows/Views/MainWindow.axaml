@@ -1,0 +1,1504 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:LfWindows.ViewModels"
+        xmlns:ae="using:AvaloniaEdit"
+        xmlns:aed="using:AvaloniaEdit.Document"
+        xmlns:models="using:LfWindows.Models"
+        xmlns:services="using:LfWindows.Services"
+        xmlns:controls="using:LfWindows.Controls"
+        xmlns:converters="using:LfWindows.Converters"
+        xmlns:adc="using:Avalonia.Data.Converters"
+        xmlns:vlc="using:LibVLCSharp.Avalonia"
+        xmlns:media="using:Avalonia.Media.Imaging"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="LfWindows.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="lf-windows"
+        Width="{Binding WindowWidth, Mode=TwoWay}"
+        Height="{Binding WindowHeight, Mode=TwoWay}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Window.Resources>
+        <converters:FileTypeToColorConverter x:Key="FileTypeToColorConverter"/>
+        <converters:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
+        <converters:InfoVisibilityConverter x:Key="InfoVisibilityConverter"/>
+        <converters:DateTimeFormatConverter x:Key="DateTimeFormatConverter"/>
+        <converters:MultiplierConverter x:Key="MultiplierConverter"/>
+        <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
+        <converters:ActiveInactiveColorConverter x:Key="ActiveInactiveColorConverter"/>
+        <converters:ColorStringConverter x:Key="ColorStringConverter"/>
+        <converters:CommandSyntaxHighlightConverter x:Key="CommandSyntaxHighlightConverter"/>
+    </Window.Resources>
+
+    <Panel Background="Transparent">
+    <Grid RowDefinitions="Auto, *, Auto">
+        <!-- Top Bar -->
+        <Border Grid.Row="0" Background="{Binding TopBarBackgroundColor}" Padding="10,12" PointerPressed="OnTitleBarPointerPressed">
+            <TextBlock Text="{Binding UserNamePath}" Foreground="{Binding TopBarTextColor}" FontWeight="{Binding TopBarFontWeight}" FontSize="{Binding TopBarFontSize}" FontFamily="{Binding TopBarFontFamily}"/>
+        </Border>
+
+        <!-- Main Content -->
+        <Panel Grid.Row="1" Panel.ZIndex="1">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding LeftColumnWidth}" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="{Binding MiddleColumnWidth}" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="{Binding RightColumnWidth}" />
+            </Grid.ColumnDefinitions>
+            <!-- Parent Column -->
+            <Panel Grid.Column="0" Background="{Binding LeftColumnColor}">
+                <ListBox KeyboardNavigation.TabNavigation="None" FontSize="{Binding MainFontSize}" FontFamily="{Binding MainFontFamily}" ItemsSource="{Binding ParentList.Items}" SelectedItem="{Binding ParentList.SelectedItem}" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Hidden" IsVisible="{Binding !IsRootDirectory}">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ListItemPadding}"/>
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Opacity="0.7" RenderOptions.BitmapInterpolationMode="HighQuality"
+                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsIconsVisible}"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center">
+                                    <TextBlock.Foreground>
+                                        <MultiBinding Converter="{StaticResource FileTypeToColorConverter}">
+                                            <Binding Path="Type"/>
+                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).LeftColumnFileTextColor"/>
+                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).LeftColumnDirectoryTextColor"/>
+                                        </MultiBinding>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- User Info Panel (Visible when Root) -->
+                <Grid IsVisible="{Binding IsRootDirectory}" RowDefinitions="2*,Auto,3*">
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" Spacing="20">
+                        <!-- Avatar -->
+                        <Border Width="100" Height="100" CornerRadius="50" ClipToBounds="True" HorizontalAlignment="Center">
+                            <Panel>
+                                <Image Source="{Binding UserAvatar}" Stretch="UniformToFill" IsVisible="{Binding UserAvatar, Converter={x:Static adc:ObjectConverters.IsNotNull}}"/>
+                                <Panel Background="#0078D7" IsVisible="{Binding UserAvatar, Converter={x:Static adc:ObjectConverters.IsNull}}">
+                                    <TextBlock Text="{Binding UserInitials}" 
+                                               Foreground="White" FontSize="40" FontWeight="Bold" 
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Panel>
+                            </Panel>
+                        </Border>
+                        
+                        <!-- Details -->
+                        <StackPanel HorizontalAlignment="Center" Spacing="8">
+                            <TextBlock Text="{Binding UserDisplayName}" FontWeight="Bold" FontSize="24" Foreground="{Binding LeftColumnFileTextColor}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding UserAccountName}" FontSize="16" Foreground="{Binding LeftColumnDirectoryTextColor}" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Panel>
+
+            <!-- Separator 1 -->
+            <GridSplitter Grid.Column="1" Width="{Binding SeparatorWidth}" MinWidth="{Binding SeparatorWidth}" Background="{Binding SeparatorColor}" ResizeBehavior="PreviousAndNext" IsVisible="{Binding !IsFloatEnabled}"/>
+
+            <!-- Current Column -->
+            <Border Grid.Column="2" Background="{Binding MiddleColumnColor}" BoxShadow="{Binding MiddleColumnBoxShadow}" Classes.floating="{Binding IsFloatEnabled}">
+                <Border.Styles>
+                    <Style Selector="Border.floating">
+                        <Setter Property="RenderTransform" Value="scale(1.02)"/>
+                        <Setter Property="ZIndex" Value="1"/>
+                        <Setter Property="CornerRadius" Value="3"/>
+                    </Style>
+                    <Style Selector="Border">
+                        <Setter Property="Transitions">
+                            <Transitions>
+                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+                                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+                                <CornerRadiusTransition Property="CornerRadius" Duration="0:0:0.2"/>
+                            </Transitions>
+                        </Setter>
+                    </Style>
+                </Border.Styles>
+                <ListBox KeyboardNavigation.TabNavigation="None" x:Name="CurrentListBox" FontSize="{Binding MainFontSize}" FontFamily="{Binding MainFontFamily}" ItemsSource="{Binding CurrentList.Items}" SelectedItem="{Binding CurrentList.SelectedItem}" AutoScrollToSelectedItem="True" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                            <Setter Property="Background" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedBackgroundColor}"/>
+                        </Style>
+                        <Style Selector="ListBoxItem:selected:focus /template/ ContentPresenter">
+                            <Setter Property="Background" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedBackgroundColor}"/>
+                        </Style>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ListItemPadding}"/>
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Panel Background="Transparent">
+                                <Grid ColumnDefinitions="Auto, *, Auto">
+                                    <Image Grid.Column="0" Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0" RenderOptions.BitmapInterpolationMode="HighQuality"
+                                           IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsIconsVisible}"/>
+                                    
+                                    <Panel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" IsVisible="{Binding !IsSelected}" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Foreground>
+                                                <MultiBinding Converter="{StaticResource FileTypeToColorConverter}">
+                                                    <Binding Path="Type"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnDirectoryTextColor"/>
+                                                </MultiBinding>
+                                            </TextBlock.Foreground>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding Name}" 
+                                                   Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnSelectedTextColor}" 
+                                                   FontWeight="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnSelectedFontWeight}" 
+                                                   IsVisible="{Binding IsSelected}" 
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </Panel>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="10" Grid.Column="2" Margin="10,0,0,0">
+                                        <StackPanel.Styles>
+                                            <Style Selector="TextBlock">
+                                                <Setter Property="FontSize" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InfoFontSize}"/>
+                                            </Style>
+                                        </StackPanel.Styles>
+                                        <TextBlock Text="{Binding SizeString}" 
+                                                   IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Config.Info, Converter={StaticResource InfoVisibilityConverter}, ConverterParameter=Size}"
+                                                   Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor}"
+                                                   VerticalAlignment="Center"/>
+                                        
+                                        <TextBlock IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Config.Info, Converter={StaticResource InfoVisibilityConverter}, ConverterParameter=Time}"
+                                                   Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor}"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource DateTimeFormatConverter}">
+                                                    <Binding Path="Modified"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatNew"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatOld"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
+                                        <TextBlock IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Config.Info, Converter={StaticResource InfoVisibilityConverter}, ConverterParameter=Atime}"
+                                                   Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor}"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource DateTimeFormatConverter}">
+                                                    <Binding Path="LastAccessTime"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatNew"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatOld"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
+                                        <TextBlock IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Config.Info, Converter={StaticResource InfoVisibilityConverter}, ConverterParameter=Btime}"
+                                                   Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor}"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource DateTimeFormatConverter}">
+                                                    <Binding Path="CreationTime"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatNew"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatOld"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
+                                        <TextBlock IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Config.Info, Converter={StaticResource InfoVisibilityConverter}, ConverterParameter=Ctime}"
+                                                   Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor}"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource DateTimeFormatConverter}">
+                                                    <Binding Path="Modified"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatNew"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Config.InfoTimeFormatOld"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
+                                        <ItemsControl ItemsSource="{Binding Permissions}"
+                                                      IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Config.Info, Converter={StaticResource InfoVisibilityConverter}, ConverterParameter=Perm}"
+                                                      VerticalAlignment="Center">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" 
+                                                               Width="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InfoFontSize, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.7}" 
+                                                               TextAlignment="Center"
+                                                               Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Grid>
+                            </Panel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- Separator 2 -->
+            <GridSplitter Grid.Column="3" Width="{Binding SeparatorWidth}" MinWidth="{Binding SeparatorWidth}" Background="{Binding SeparatorColor}" ResizeBehavior="PreviousAndNext" IsVisible="{Binding !IsFloatEnabled}"/>
+
+            <!-- Preview Column -->
+            <Border Grid.Column="4" Background="{Binding RightColumnColor}" Padding="0">
+                <ContentControl x:Name="PreviewContentControl" Content="{Binding PreviewContent}" IsVisible="{Binding !IsDialogVisible}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="vm:FileListViewModel">
+                            <ListBox KeyboardNavigation.TabNavigation="None" FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MainFontSize}" FontFamily="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MainFontFamily}" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ListItemPadding}"/>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Image Source="{Binding Icon}" Width="16" Height="16" Opacity="0.7" RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                   IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsIconsVisible}"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center">
+                                                <TextBlock.Foreground>
+                                                    <MultiBinding Converter="{StaticResource FileTypeToColorConverter}">
+                                                        <Binding Path="Type"/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor"/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnDirectoryTextColor"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Foreground>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DataTemplate>
+                        <DataTemplate DataType="services:ArchivePreviewResult">
+                            <ListBox KeyboardNavigation.TabNavigation="None" FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MainFontSize}" FontFamily="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MainFontFamily}" ItemsSource="{Binding Items}" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ListItemPadding}"/>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <!-- Use a generic file icon for now or bind if available -->
+                                            <Image Source="{Binding Icon}" Width="16" Height="16" Opacity="0.7" RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                   IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsIconsVisible}"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center">
+                                                <TextBlock.Foreground>
+                                                    <MultiBinding Converter="{StaticResource FileTypeToColorConverter}">
+                                                        <Binding Path="Type"/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor"/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnDirectoryTextColor"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Foreground>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DataTemplate>
+                        <DataTemplate DataType="services:FolderPreviewResult">
+                            <Grid RowDefinitions="Auto, *">
+                                <TextBlock Text="{Binding Path}" FontWeight="Bold" Margin="5" TextTrimming="CharacterEllipsis" 
+                                           Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                <ListBox Grid.Row="1" KeyboardNavigation.TabNavigation="None" FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MainFontSize}" FontFamily="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MainFontFamily}" ItemsSource="{Binding Items}" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                    <ListBox.Styles>
+                                        <Style Selector="ListBoxItem">
+                                            <Setter Property="Padding" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ListItemPadding}"/>
+                                        </Style>
+                                    </ListBox.Styles>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <Image Source="{Binding Icon}" Width="16" Height="16" Opacity="0.7" RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsIconsVisible}"/>
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center">
+                                                    <TextBlock.Foreground>
+                                                        <MultiBinding Converter="{StaticResource FileTypeToColorConverter}">
+                                                            <Binding Path="Type"/>
+                                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor"/>
+                                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnDirectoryTextColor"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Foreground>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </DataTemplate>
+                        <DataTemplate DataType="models:FileInfoPreviewModel">
+                            <ScrollViewer Margin="15,0,10,0">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="File Information" FontSize="18" FontWeight="Bold" 
+                                               Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}" 
+                                               Margin="0,0,0,10"/>
+                                    
+                                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FileName}" TextWrapping="Wrap" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Path:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FilePath}" TextWrapping="Wrap" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Size:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FileSize}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Type:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Extension}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Created:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Created}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Modified}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Accessed:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Accessed}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Attributes:" FontWeight="Bold" Margin="0,0,10,5" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Attributes}" TextWrapping="Wrap" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+                        <DataTemplate DataType="models:MarkdownPreviewModel">
+                            <Grid>
+                                <!-- Source View -->
+                                <ae:TextEditor Document="{Binding SourceDocument}"
+                                             IsReadOnly="True" 
+                                             ShowLineNumbers="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowLineNumbers}"
+                                             WordWrap="True"
+                                             FontFamily="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewTextFontFamily}"
+                                             FontSize="14"
+                                             Background="Transparent"
+                                             Margin="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewEditorMargin}"
+                                             Padding="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewEditorPadding}"
+                                             SyntaxHighlighting="{Binding HighlightingDefinition}"
+                                             Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+
+                                <!-- Error Message Overlay -->
+                                <Border Background="#AA330000" VerticalAlignment="Top" Margin="20" Padding="10" CornerRadius="5"
+                                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="{Binding ErrorMessage}" Foreground="White" TextWrapping="Wrap"/>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                        <DataTemplate DataType="models:PdfPreviewModel">
+                            <ListBox ItemsSource="{Binding Pages}" 
+                                     Background="Transparent" 
+                                     Margin="15,0,10,0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="0,0,0,10"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <!-- Disable hover/selection background if desired, or keep it -->
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <controls:PdfPageView />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DataTemplate>
+                        <DataTemplate DataType="models:CodePreviewModel">
+                            <ae:TextEditor Document="{Binding Document}" 
+                                         SyntaxHighlighting="{Binding SyntaxHighlighting}"
+                                         IsReadOnly="True" 
+                                         ShowLineNumbers="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowLineNumbers}"
+                                         WordWrap="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsPreviewWordWrapEnabled}"
+                                         FontFamily="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewTextFontFamily}"
+                                         FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewFontSize}"
+                                         Background="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CodeBackgroundColor}"
+                                         Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CodeTextColor}"
+                                         LineNumbersForeground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CodeLineNumberColor}"
+                                         Margin="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewEditorMargin}"
+                                         Padding="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewEditorPadding}"/>
+                        </DataTemplate>
+                        <DataTemplate DataType="aed:TextDocument">
+                            <ae:TextEditor Document="{Binding}" 
+                                         IsReadOnly="True" 
+                                         ShowLineNumbers="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowLineNumbers}"
+                                         WordWrap="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsPreviewWordWrapEnabled}"
+                                         FontFamily="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewTextFontFamily}"
+                                         FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewFontSize}"
+                                         Background="Transparent"
+                                         Margin="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewEditorMargin}"
+                                         Padding="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewEditorPadding}"
+                                         Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                        </DataTemplate>
+                        <DataTemplate DataType="models:FontPreviewModel">
+                            <ScrollViewer Margin="15,0,10,0">
+                                <StackPanel Spacing="20">
+                                    <TextBlock Text="{Binding FontFamilyName}" FontSize="32" FontWeight="Bold" 
+                                               Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                    
+                                    <Border Background="White" 
+                                            Padding="20" CornerRadius="5">
+                                        <Image Source="{Binding PreviewImage}" Stretch="Uniform" HorizontalAlignment="Left"/>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+                        <DataTemplate DataType="models:ImagePreviewModel">
+                            <Grid RowDefinitions="*, Auto" Margin="15,0,10,0">
+                                <controls:ZoomBorder Grid.Row="0" Background="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnColor}">
+                                    <Image Source="{Binding Image}" Stretch="Uniform" />
+                                </controls:ZoomBorder>
+                                <Border Grid.Row="1" Background="Transparent" Padding="10" Margin="15,10,10,10" CornerRadius="5">
+                                    <ItemsControl ItemsSource="{Binding Metadata}" FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InfoFontSize}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="Auto, *">
+                                                    <TextBlock Grid.Column="0" Text="{Binding Key, StringFormat='{}{0}: '}" FontWeight="Bold" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}" Margin="0,0,5,0"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}" TextWrapping="Wrap"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                        <DataTemplate DataType="media:Bitmap">
+                            <controls:ZoomBorder Background="Transparent" Margin="15,0,10,0">
+                                <Image Source="{Binding}" Stretch="Uniform" />
+                            </controls:ZoomBorder>
+                        </DataTemplate>
+                        <DataTemplate DataType="models:OfficePreviewModel">
+                            <controls:OfficePreviewControl DataContext="{Binding}"
+                                                       BackgroundBrush="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnColor, Converter={StaticResource ColorToBrushConverter}}"
+                                                       Margin="15,0,10,0" />
+                        </DataTemplate>
+                        <DataTemplate DataType="models:ExcelPreviewModel">
+                            <controls:ExcelPreviewControl Margin="15,0,10,0" />
+                        </DataTemplate>
+                        <DataTemplate DataType="models:VideoPreviewModel">
+                            <Grid RowDefinitions="*, Auto" Margin="15,0,10,0">
+                                <controls:VideoPreviewControl Grid.Row="0" />
+                                <Border Grid.Row="1" Background="Transparent" Padding="10" Margin="0,10,0,10" CornerRadius="5">
+                                    <ItemsControl ItemsSource="{Binding Metadata}" FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InfoFontSize}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="Auto, *">
+                                                    <TextBlock Grid.Column="0" Text="{Binding Key, StringFormat='{}{0}: '}" FontWeight="Bold" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}" Margin="0,0,5,0"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}" TextWrapping="Wrap"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                        <DataTemplate DataType="services:ArchivePreviewResult">
+                            <ListBox ItemsSource="{Binding Items}" Background="Transparent" Margin="15,0,10,0">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="4,2"/>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="Auto, *">
+                                            <TextBlock Text="{Binding Size}" Width="70" Foreground="#666666" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" 
+                                                       Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DataTemplate>
+                        <DataTemplate DataType="x:String">
+                            <TextBlock Text="{Binding}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor}" Margin="15,10" 
+                                       FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewFontSize}"/>
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+            </Border>
+        </Grid>
+
+
+        </Panel>
+
+        <!-- Status Bar & Command Line -->
+        <Grid Grid.Row="2" Background="{Binding StatusBarBackgroundColor}">
+            <!-- Status Bar (Visible when CommandLine is NOT visible OR when CommandLine is Locked) -->
+            <Border Padding="10,14,10,10">
+                <Border.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                        <Binding Path="!CommandLine.IsVisible"/>
+                        <Binding Path="CommandLine.IsLocked"/>
+                    </MultiBinding>
+                </Border.IsVisible>
+                <Grid ColumnDefinitions="Auto, *">
+                    <!-- Filter Indicator (Only visible when Locked) -->
+                    <StackPanel Orientation="Horizontal" Grid.Column="0" IsVisible="{Binding CommandLine.IsLocked}" Margin="0,0,15,0">
+                        <TextBlock Text="{Binding FilterPrompt}" 
+                                   Foreground="{Binding StatusBarTextColor}" 
+                                   FontWeight="Bold"
+                                   FontSize="{Binding StatusBarFontSize}" 
+                                   FontFamily="{Binding StatusBarFontFamily}"/>
+                        <TextBlock Text="{Binding CommandLine.CommandText}" 
+                                   Foreground="{Binding StatusBarTextColor}" 
+                                   FontWeight="Bold"
+                                   FontSize="{Binding StatusBarFontSize}" 
+                                   FontFamily="{Binding StatusBarFontFamily}"/>
+                    </StackPanel>
+
+                    <!-- Active Filter Status (New) -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" IsVisible="{Binding IsFilterLocked}" Margin="0,0,15,0">
+                        <TextBlock Text="{Binding FilterModeStatus}" 
+                                   Foreground="#dd5000" 
+                                   FontWeight="Bold"
+                                   FontSize="{Binding StatusBarFontSize}" 
+                                   FontFamily="{Binding StatusBarFontFamily}"/>
+                        <TextBlock Text="{Binding FilterPatternStatus}" 
+                                   Foreground="{Binding StatusBarTextColor}" 
+                                   FontWeight="{Binding StatusBarFontWeight}" 
+                                   FontSize="{Binding StatusBarFontSize}" 
+                                   FontFamily="{Binding StatusBarFontFamily}"/>
+                    </StackPanel>
+                    
+                    <!-- Regular Status Text -->
+                    <TextBlock Grid.Column="1" 
+                               Text="{Binding StatusText}" 
+                               Foreground="{Binding StatusBarTextColor}" 
+                               FontWeight="{Binding StatusBarFontWeight}" 
+                               FontSize="{Binding StatusBarFontSize}" 
+                               FontFamily="{Binding StatusBarFontFamily}"/>
+                </Grid>
+            </Border>
+            
+            <!-- Command Line (Visible when CommandLine IS visible AND NOT Locked) -->
+            <Grid ColumnDefinitions="Auto, *" Background="{Binding CommandLineBackgroundColor}">
+                <Grid.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="CommandLine.IsVisible"/>
+                        <Binding Path="!CommandLine.IsLocked"/>
+                    </MultiBinding>
+                </Grid.IsVisible>
+                
+                <TextBlock Text="{Binding CommandLine.Prefix}" 
+                           Foreground="#dd5000" 
+                           FontSize="{Binding CommandLineFontSize}"
+                           FontWeight="Bold"
+                           FontFamily="{Binding CommandLineFontFamily}"
+                           VerticalAlignment="Top"
+                           Margin="10,14,0,10"/>
+                
+                <Grid Grid.Column="1">
+                    <!-- Overlay for Syntax Highlighting -->
+                    <TextBlock IsHitTestVisible="False"
+                               FontSize="{Binding CommandLineFontSize}"
+                               FontFamily="{Binding CommandLineFontFamily}"
+                               Foreground="{Binding CommandLineTextColor}"
+                               VerticalAlignment="Top"
+                               Margin="0,14,10,10">
+                        <TextBlock.Inlines>
+                            <MultiBinding Converter="{StaticResource CommandSyntaxHighlightConverter}">
+                                <Binding Path="CommandLine.CommandText"/>
+                                <Binding Path="AllCommands"/>
+                                <Binding Path="NoArgCommands"/>
+                            </MultiBinding>
+                        </TextBlock.Inlines>
+                    </TextBlock>
+
+                    <TextBox x:Name="CommandTextBox"
+                             Text="{Binding CommandLine.CommandText}" 
+                             IsVisible="{Binding !CommandLine.IsInputHidden}"
+                             Background="Transparent"
+                             Foreground="Transparent"
+                             SelectionBrush="{Binding CommandLineSelectionBackgroundColor, Converter={StaticResource ColorToBrushConverter}}"
+                             SelectionForegroundBrush="{Binding CommandLineTextColor}"
+                             SelectionStart="{Binding CommandLine.SelectionStart, Mode=TwoWay}"
+                             SelectionEnd="{Binding CommandLine.SelectionEnd, Mode=TwoWay}"
+                             FontSize="{Binding CommandLineFontSize}"
+                             FontWeight="{Binding CommandLineFontWeight}"
+                             FontFamily="{Binding CommandLineFontFamily}"
+                             CaretBrush="{Binding CommandLineTextColor}"
+                             BorderThickness="0"
+                             Padding="0,14,10,10"
+                             KeyDown="OnCommandLineKeyDown">
+                        <TextBox.Styles>
+                            <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                            </Style>
+                            <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                            </Style>
+                            <Style Selector="TextBox:focus">
+                                <Setter Property="Foreground" Value="Transparent"/>
+                            </Style>
+                        </TextBox.Styles>
+                    </TextBox>
+                </Grid>
+            </Grid>
+        </Grid>
+
+    </Grid>
+
+
+
+
+
+    <!-- Bookmark Popup Overlay -->
+    <Border Background="#80000000" IsVisible="{Binding IsBookmarkListVisible}" ZIndex="900">
+        <Border Background="{Binding DialogBackgroundColor}" BorderBrush="{Binding DialogBorderColor}" BorderThickness="1" CornerRadius="3" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20" Width="600"
+                MaxWidth="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}"
+                MaxHeight="{Binding Bounds.Height, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}">
+            <StackPanel Spacing="10">
+                <TextBlock Text="Bookmarks" FontWeight="Bold" FontSize="16" Foreground="{Binding DialogTextColor}"/>
+                <ListBox ItemsSource="{Binding BookmarkItems}" SelectedItem="{Binding SelectedBookmarkItem}" Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="30, *" ToolTip.Tip="{Binding Path}" Background="Transparent">
+                                <TextBlock Grid.Column="0" Text="{Binding Key}" FontWeight="Bold" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogIndexColor}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Path}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogTextColor}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock Text="Press key to jump..." FontStyle="Italic" Foreground="{Binding DialogTextColor}" Opacity="0.7" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Border>
+
+    <!-- Settings Overlay -->
+    <Border Background="#80000000" IsVisible="{Binding IsSettingsVisible}">
+        <Border Background="#333" BorderBrush="{Binding DialogBorderColor}" BorderThickness="1" CornerRadius="8" 
+                Width="900" Height="650" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                MaxWidth="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.95}"
+                MaxHeight="{Binding Bounds.Height, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.95}">
+            <Grid RowDefinitions="Auto, *, Auto">
+                <Border Grid.Row="0" Padding="15" BorderBrush="#444" BorderThickness="0,0,0,1">
+                    <TextBlock Text="Settings" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                </Border>
+                
+                <TabControl Grid.Row="1" Margin="0">
+                    <TabItem FontSize="14">
+                        <TabItem.Header>
+                            <TextBlock Text="General" Foreground="#E0E0E0"/>
+                        </TabItem.Header>
+                        <StackPanel Spacing="15" Margin="15">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Theme" Foreground="#CCC"/>
+                                <ComboBox SelectedItem="{Binding SelectedTheme}" HorizontalAlignment="Stretch">
+                                    <ComboBox.Items>
+                                        <x:String>System</x:String>
+                                        <x:String>Light</x:String>
+                                        <x:String>Dark</x:String>
+                                    </ComboBox.Items>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Workspace Directory Name/Path" Foreground="#CCC"/>
+                                <TextBox Text="{Binding WorkspaceDirectory}" Watermark="Default: Workspace (Relative to UserProfile) or Absolute Path"/>
+                                <TextBlock Text="Note: Changes require restart to take full effect." FontSize="11" Foreground="#888" FontStyle="Italic"/>
+                            </StackPanel>
+
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Startup" Foreground="#CCC"/>
+                                <CheckBox IsChecked="{Binding IsAppStartupEnabled}" Content="Start lf-windows on system boot" Foreground="White"/>
+                                <CheckBox IsChecked="{Binding IsWatcherStartupEnabled}" Content="Start lf-watcher on system boot (Background)" Foreground="White"/>
+                            </StackPanel>
+                            
+                            <Button Command="{Binding ResetSettingsCommand}" Content="Reset to Defaults" Background="#883333" Foreground="White" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </TabItem>
+                    
+                    <TabItem FontSize="14">
+                        <TabItem.Header>
+                            <TextBlock Text="Appearance" Foreground="#E0E0E0"/>
+                        </TabItem.Header>
+                        <ScrollViewer>
+                            <StackPanel Spacing="15" Margin="15">
+                                <!-- General Appearance Settings -->
+                                <Grid ColumnDefinitions="*, 15, *">
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Edit Theme Profile" Foreground="#CCC"/>
+                                            <ComboBox SelectedItem="{Binding EditingTheme}" HorizontalAlignment="Stretch">
+                                                <ComboBox.Items>
+                                                    <x:String>Dark</x:String>
+                                                    <x:String>Light</x:String>
+                                                </ComboBox.Items>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Main Font Family" Foreground="#CCC"/>
+                                            <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding MainFontFamily}" HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Main Font Size" Foreground="#CCC"/>
+                                            <NumericUpDown Value="{Binding MainFontSize}" Minimum="8" Maximum="32" Increment="1" HorizontalAlignment="Left" Width="120" Foreground="White" Background="#444"/>
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Info Font Size" Foreground="#CCC"/>
+                                            <NumericUpDown Value="{Binding InfoFontSize}" Minimum="8" Maximum="32" Increment="1" HorizontalAlignment="Left" Width="120" Foreground="White" Background="#444"/>
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Preview Font (Text/Code)" Foreground="#CCC"/>
+                                            <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding PreviewTextFontFamily}" HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Global Show Hotkey" Foreground="#CCC"/>
+                                            <TextBox Text="{Binding GlobalShowHotkey}" Watermark="e.g. F12, Ctrl+Alt+S"/>
+                                        </StackPanel>
+                                        
+                                        <StackPanel Orientation="Horizontal" Spacing="15">
+                                            <CheckBox IsChecked="{Binding IsIconsVisible}" Content="Show Icons" Foreground="#CCC"/>
+                                            <CheckBox IsChecked="{Binding IsCompactMode}" Content="Compact Mode" Foreground="#CCC"/>
+                                            <CheckBox IsChecked="{Binding IsFloatEnabled}" Content="Float Mode" Foreground="#CCC"/>
+                                        </StackPanel>
+
+                                        <CheckBox IsChecked="{Binding EnableOfficePreload}" Content="Preload Office (Faster Preview)" Foreground="#CCC" ToolTip.Tip="Keep Office processes running in background for instant preview. Uses more memory."/>
+
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Column Ratio (Left,Middle,Right)" Foreground="#CCC"/>
+                                            <TextBox Text="{Binding ColumnRatioString}" Watermark="e.g. 1,2,3"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="Window Size Presets" FontWeight="Bold" Foreground="White" Margin="0,5,0,0"/>
+                                <Border Background="#2A2A2A" CornerRadius="6" Padding="10" BorderBrush="#444" BorderThickness="1">
+                                    <Grid ColumnDefinitions="*, 15, *">
+                                        <Grid Grid.Column="0" ColumnDefinitions="120, *">
+                                            <TextBlock Text="Small (Alt+1)" VerticalAlignment="Center" Foreground="#CCC"/>
+                                            <Grid Grid.Column="1" ColumnDefinitions="*, Auto, *">
+                                                <NumericUpDown Grid.Column="0" Value="{Binding SmallWindowWidth}" Minimum="400" Maximum="3000" Increment="10" ButtonSpinnerLocation="Right"/>
+                                                <TextBlock Grid.Column="1" Text="×" VerticalAlignment="Center" Foreground="#CCC" Margin="5,0"/>
+                                                <NumericUpDown Grid.Column="2" Value="{Binding SmallWindowHeight}" Minimum="300" Maximum="2000" Increment="10" ButtonSpinnerLocation="Right"/>
+                                            </Grid>
+                                        </Grid>
+                                        <Grid Grid.Column="2" ColumnDefinitions="120, *">
+                                            <TextBlock Text="Large (Alt+2)" VerticalAlignment="Center" Foreground="#CCC"/>
+                                            <Grid Grid.Column="1" ColumnDefinitions="*, Auto, *">
+                                                <NumericUpDown Grid.Column="0" Value="{Binding LargeWindowWidth}" Minimum="400" Maximum="3000" Increment="10" ButtonSpinnerLocation="Right"/>
+                                                <TextBlock Grid.Column="1" Text="×" VerticalAlignment="Center" Foreground="#CCC" Margin="5,0"/>
+                                                <NumericUpDown Grid.Column="2" Value="{Binding LargeWindowHeight}" Minimum="300" Maximum="2000" Increment="10" ButtonSpinnerLocation="Right"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Columns Settings -->
+                                <Grid ColumnDefinitions="*, 15, *, 15, *">
+                                    <!-- Left Column -->
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <TextBlock Text="Left Column" FontWeight="Bold" Foreground="White"/>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Background" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditLeftColumnColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="File Text" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditLeftColumnFileTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Directory Text" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditLeftColumnDirectoryTextColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Middle Column -->
+                                    <StackPanel Grid.Column="2" Spacing="10">
+                                        <TextBlock Text="Middle Column" FontWeight="Bold" Foreground="White"/>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Background" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMiddleColumnColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="File Text" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMiddleColumnFileTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Directory Text" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMiddleColumnDirectoryTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Selected Text" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMiddleColumnSelectedTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Selected Bg" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditSelectedBackgroundColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Selected Weight" Foreground="#CCC" FontSize="12"/>
+                                            <ComboBox SelectedItem="{Binding EditMiddleColumnSelectedFontWeightString}" HorizontalAlignment="Stretch">
+                                                <ComboBox.Items>
+                                                    <x:String>Normal</x:String>
+                                                    <x:String>Bold</x:String>
+                                                    <x:String>SemiBold</x:String>
+                                                    <x:String>Light</x:String>
+                                                </ComboBox.Items>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Right Column -->
+                                    <StackPanel Grid.Column="4" Spacing="10">
+                                        <TextBlock Text="Right Column" FontWeight="Bold" Foreground="White"/>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Background" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditRightColumnColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="File Text" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditRightColumnFileTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Directory Text" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditRightColumnDirectoryTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Separator Color" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditSeparatorColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Separator Width" Foreground="#CCC" FontSize="12"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <NumericUpDown Value="{Binding SeparatorWidth}" Minimum="1" Maximum="10" Increment="1"/>
+                                                <TextBlock Text="px" VerticalAlignment="Center" Foreground="#CCC"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Separator Background="#444" Height="1" Margin="0,5"/>
+
+                                <!-- Bars Settings -->
+                                <Grid ColumnDefinitions="*, 15, *, 15, *">
+                                    <!-- Top Bar -->
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <TextBlock Text="Top Bar" FontWeight="Bold" Foreground="White"/>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Background" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditTopBarBackgroundColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Text Color" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditTopBarTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Size" Foreground="#CCC" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding TopBarFontSize}" Minimum="8" Maximum="32" Increment="1"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Weight" Foreground="#CCC" FontSize="12"/>
+                                            <ComboBox SelectedItem="{Binding TopBarFontWeightString}" HorizontalAlignment="Stretch">
+                                                <ComboBox.Items>
+                                                    <x:String>Normal</x:String>
+                                                    <x:String>Bold</x:String>
+                                                    <x:String>SemiBold</x:String>
+                                                    <x:String>Light</x:String>
+                                                </ComboBox.Items>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Family" Foreground="#CCC" FontSize="12"/>
+                                            <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding TopBarFontFamily}" HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Status Bar -->
+                                    <StackPanel Grid.Column="2" Spacing="10">
+                                        <TextBlock Text="Status Bar" FontWeight="Bold" Foreground="White"/>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Background" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditStatusBarBackgroundColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Text Color" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditStatusBarTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Size" Foreground="#CCC" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding StatusBarFontSize}" Minimum="8" Maximum="32" Increment="1"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Weight" Foreground="#CCC" FontSize="12"/>
+                                            <ComboBox SelectedItem="{Binding StatusBarFontWeightString}" HorizontalAlignment="Stretch">
+                                                <ComboBox.Items>
+                                                    <x:String>Normal</x:String>
+                                                    <x:String>Bold</x:String>
+                                                    <x:String>SemiBold</x:String>
+                                                    <x:String>Light</x:String>
+                                                </ComboBox.Items>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Family" Foreground="#CCC" FontSize="12"/>
+                                            <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding StatusBarFontFamily}" HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Command Line -->
+                                    <StackPanel Grid.Column="4" Spacing="10">
+                                        <TextBlock Text="Command Line" FontWeight="Bold" Foreground="White"/>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Background" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCommandLineBackgroundColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Text Color" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCommandLineTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Size" Foreground="#CCC" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding CommandLineFontSize}" Minimum="8" Maximum="32" Increment="1"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Weight" Foreground="#CCC" FontSize="12"/>
+                                            <ComboBox SelectedItem="{Binding CommandLineFontWeight}" HorizontalAlignment="Stretch">
+                                                <ComboBox.Items>
+                                                    <x:String>Normal</x:String>
+                                                    <x:String>Bold</x:String>
+                                                    <x:String>SemiBold</x:String>
+                                                    <x:String>Light</x:String>
+                                                </ComboBox.Items>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Font Family" Foreground="#CCC" FontSize="12"/>
+                                            <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding CommandLineFontFamily}" HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem FontSize="14">
+                        <TabItem.Header>
+                            <TextBlock Text="Preview Colors" Foreground="#E0E0E0"/>
+                        </TabItem.Header>
+                        <ScrollViewer>
+                            <StackPanel Spacing="15" Margin="15">
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="Edit Theme Profile" Foreground="#CCC"/>
+                                    <ComboBox SelectedItem="{Binding EditingTheme}" HorizontalAlignment="Stretch">
+                                        <ComboBox.Items>
+                                            <x:String>Dark</x:String>
+                                            <x:String>Light</x:String>
+                                        </ComboBox.Items>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <Separator Background="#444" Height="1" Margin="0,5"/>
+
+                                <TextBlock Text="Markdown Preview" FontWeight="Bold" Foreground="White"/>
+                                <Grid ColumnDefinitions="*, 15, *, 15, *">
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Heading" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMarkdownHeadingColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Code Block" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMarkdownCodeColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Image" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMarkdownImageColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Block Quote" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMarkdownBlockQuoteColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Emphasis (Italic)" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMarkdownEmphasisColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Link" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMarkdownLinkColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Strong (Bold)" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditMarkdownStrongEmphasisColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Separator Background="#444" Height="1" Margin="0,5"/>
+
+                                <TextBlock Text="Code Preview (Editor)" FontWeight="Bold" Foreground="White"/>
+                                <Grid ColumnDefinitions="*, 15, *, 15, *">
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Background" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeBackgroundColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Text Color" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeTextColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Selection" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeSelectionColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Line Number" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeLineNumberColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Separator Background="#444" Height="1" Margin="0,5"/>
+
+                                <TextBlock Text="Code Preview (Syntax)" FontWeight="Bold" Foreground="White"/>
+                                <Grid ColumnDefinitions="*, 15, *, 15, *">
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Comment" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeCommentColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="String" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeStringColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Keyword" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeKeywordColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Number" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeNumberColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Method" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeMethodColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Class" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeClassColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Variable" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeVariableColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="Operator" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeOperatorColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" Spacing="10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="HTML Tag" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeHtmlTagColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="CSS Property" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeCssPropertyColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="CSS Value" Foreground="#CCC" FontSize="12"/>
+                                            <controls:ColorInput Color="{Binding EditCodeCssValueColor}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem FontSize="14">
+                        <TabItem.Header>
+                            <TextBlock Text="Command Panel" Foreground="#E0E0E0"/>
+                        </TabItem.Header>
+                        <Grid ColumnDefinitions="*, 15, *" Margin="15">
+                            <!-- Available Commands -->
+                            <Grid Grid.Column="0" RowDefinitions="Auto, *">
+                                <TextBlock Grid.Row="0" Text="Available Commands" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+                                <ListBox Grid.Row="1" ItemsSource="{Binding AvailablePanelCommands}" Background="#2A2A2A" BorderBrush="#444" BorderThickness="1" CornerRadius="4">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="*, Auto">
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" Foreground="#CCC"/>
+                                                <Button Grid.Column="1" Content="+" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddPanelCommandCommand}" CommandParameter="{Binding}" 
+                                                        Background="#333" Foreground="White" Padding="8,4" Margin="5,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+
+                            <!-- Selected Commands -->
+                            <Grid Grid.Column="2" RowDefinitions="Auto, *">
+                                <TextBlock Grid.Row="0" Text="Selected Commands (Max 15)" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+                                <ListBox Grid.Row="1" ItemsSource="{Binding SelectedPanelCommands}" Background="#2A2A2A" BorderBrush="#444" BorderThickness="1" CornerRadius="4">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="*, Auto, Auto, Auto">
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" Foreground="#CCC"/>
+                                                <Button Grid.Column="1" Content="↑" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MovePanelCommandUpCommand}" CommandParameter="{Binding}" 
+                                                        Background="#444" Foreground="White" Padding="8,4" Margin="5,0,0,0" ToolTip.Tip="Move Up"/>
+                                                <Button Grid.Column="2" Content="↓" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MovePanelCommandDownCommand}" CommandParameter="{Binding}" 
+                                                        Background="#444" Foreground="White" Padding="8,4" Margin="5,0,0,0" ToolTip.Tip="Move Down"/>
+                                                <Button Grid.Column="3" Content="-" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemovePanelCommandCommand}" CommandParameter="{Binding}" 
+                                                        Background="#883333" Foreground="White" Padding="8,4" Margin="5,0,0,0" ToolTip.Tip="Remove"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+                    <TabItem FontSize="14">
+                        <TabItem.Header>
+                            <TextBlock Text="Key Bindings" Foreground="#E0E0E0"/>
+                        </TabItem.Header>
+                        <Grid RowDefinitions="Auto, *">
+                            <TextBlock Grid.Row="0" Text="Restart application to apply key binding changes." Foreground="#AAA" Margin="15,10,15,0" FontStyle="Italic"/>
+                            <ListBox Grid.Row="1" ItemsSource="{Binding KeyBindingItems}" Background="Transparent" Margin="15">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="80, 200, 150, *">
+                                            <TextBlock Grid.Column="0" Text="{Binding Description}" VerticalAlignment="Center" Foreground="#AAA"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding CommandName}" VerticalAlignment="Center" Foreground="White" FontWeight="Bold"/>
+                                            <TextBox Grid.Column="2" Text="{Binding KeySequence}" Margin="0,0,10,0" Background="#222" Foreground="White" BorderThickness="1" BorderBrush="#555"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+
+                <Border Grid.Row="2" Padding="15" BorderBrush="#444" BorderThickness="0,1,0,0">
+                    <Button Command="{Binding ToggleSettingsCommand}" Content="Close" HorizontalAlignment="Right" Foreground="White"/>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+
+    <!-- Yank History Overlay -->
+    <Border Background="#80000000" IsVisible="{Binding IsYankHistoryVisible}" ZIndex="900">
+        <Border Background="{Binding DialogBackgroundColor}" BorderBrush="{Binding DialogBorderColor}" BorderThickness="2" 
+                HorizontalAlignment="Center" VerticalAlignment="Center" 
+                Width="700" MaxHeight="500" CornerRadius="3" Padding="15" BoxShadow="0 4 10 0 #40000000"
+                MaxWidth="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}">
+            <Grid RowDefinitions="Auto, *">
+                <TextBlock Text="Yank History (Select to Paste, 'c' to Delete, Esc to Close)" FontWeight="Bold" Margin="0,0,0,15" FontSize="16" Foreground="{Binding DialogTextColor}"/>
+                
+                <ListBox Grid.Row="1" ItemsSource="{Binding YankHistory}" SelectedItem="{Binding SelectedYankHistoryItem}" Background="Transparent">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="8"/>
+                            <Setter Property="CornerRadius" Value="3"/>
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="30, *" ToolTip.Tip="{Binding ToolTipText}" Background="Transparent">
+                                <TextBlock Grid.Column="0" Text="{Binding Index}" FontWeight="SemiBold" VerticalAlignment="Center"
+                                           Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogIndexColor}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding ContentText}" VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                           Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogTextColor}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Border>
+
+    <!-- Workspace Panel Overlay -->
+    <Grid IsVisible="{Binding IsWorkspacePanelVisible}" Panel.ZIndex="950" Background="#80000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Width="800" Height="450" HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="1" BorderBrush="{Binding DialogBorderColor}" CornerRadius="8" BoxShadow="0 4 10 0 #40000000"
+                MaxWidth="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}"
+                MaxHeight="{Binding Bounds.Height, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}">
+            <Grid ColumnDefinitions="1*, 2*">
+                <!-- Workspaces List -->
+                <Border Grid.Column="0" BorderThickness="0" CornerRadius="8,0,0,8" ClipToBounds="True">
+                <Border.Background>
+                    <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                        <Binding Path="WorkspacePanel.IsWorkspaceListFocused"/>
+                        <Binding Path="MiddleColumnColor"/>
+                        <Binding Path="RightColumnColor"/>
+                    </MultiBinding>
+                </Border.Background>
+                <Grid RowDefinitions="Auto, Auto, *">
+                    <TextBlock Text="Workspaces (1-9)" Margin="10" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                                <Binding Path="WorkspacePanel.IsWorkspaceListFocused"/>
+                                <Binding Path="MiddleColumnFileTextColor"/>
+                                <Binding Path="RightColumnFileTextColor"/>
+                            </MultiBinding>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <Border Margin="5" Padding="5" IsVisible="{Binding WorkspacePanel.IsLinkMode}">
+                        <Border.Background>
+                            <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                                <Binding Path="WorkspacePanel.IsWorkspaceListFocused"/>
+                                <Binding Path="MiddleColumnColor"/>
+                                <Binding Path="RightColumnColor"/>
+                            </MultiBinding>
+                        </Border.Background>
+                        <TextBlock Text="{Binding WorkspacePanel.LinkModeTitle}" Foreground="{Binding MiddleColumnSelectedTextColor}" TextWrapping="Wrap" FontWeight="Bold"/>
+                    </Border>
+                    <ListBox x:Name="WorkspaceListBox" Grid.Row="2" ItemsSource="{Binding WorkspacePanel.Workspaces}" SelectedItem="{Binding WorkspacePanel.SelectedWorkspace}" Background="Transparent" Focusable="True">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5"/>
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="30, *">
+                                    <TextBlock Text="{Binding ShortcutKey}" FontWeight="Bold" VerticalAlignment="Center">
+                                        <TextBlock.Foreground>
+                                            <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).WorkspacePanel.IsWorkspaceListFocused"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor"/>
+                                            </MultiBinding>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    
+                                    <!-- Normal View -->
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" IsVisible="{Binding !IsEditing}">
+                                        <TextBlock.Foreground>
+                                            <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).WorkspacePanel.IsWorkspaceListFocused"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor"/>
+                                            </MultiBinding>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    
+                                    <!-- Editing View -->
+                                    <TextBox Grid.Column="1" Text="{Binding EditName}" IsVisible="{Binding IsEditing}" 
+                                             KeyDown="OnWorkspaceEditKeyDown" AttachedToVisualTree="OnWorkspaceEditAttached"
+                                             Background="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InputBackgroundColor}" 
+                                             Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InputTextColor}" 
+                                             CaretBrush="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InputCaretColor}"
+                                             SelectionBrush="#0078D7" SelectionForegroundBrush="White"
+                                             BorderThickness="1" 
+                                             BorderBrush="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InputBorderColor}" 
+                                             Padding="6,0,0,0" VerticalContentAlignment="Center" Height="26"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+            
+            <!-- Items List -->
+            <Border Grid.Column="1" BorderThickness="0" CornerRadius="0,8,8,0" ClipToBounds="True">
+                <Border.Background>
+                    <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                        <Binding Path="WorkspacePanel.IsWorkspaceListFocused"/>
+                        <Binding Path="RightColumnColor"/>
+                        <Binding Path="MiddleColumnColor"/>
+                    </MultiBinding>
+                </Border.Background>
+                <Grid RowDefinitions="Auto, *">
+                    <TextBlock Text="Items (1-9)" Margin="10" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                                <Binding Path="WorkspacePanel.IsWorkspaceListFocused"/>
+                                <Binding Path="RightColumnFileTextColor"/>
+                                <Binding Path="MiddleColumnFileTextColor"/>
+                            </MultiBinding>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <ListBox x:Name="WorkspaceItemsListBox" Grid.Row="1" ItemsSource="{Binding WorkspacePanel.SelectedWorkspace.Items}" SelectedItem="{Binding WorkspacePanel.SelectedItem}" Background="Transparent">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5"/>
+                            </Style>
+                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                <Setter Property="Background" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedBackgroundColor}"/>
+                            </Style>
+                            <Style Selector="ListBoxItem:selected:not(:focus) /template/ ContentPresenter">
+                                <Setter Property="Background" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedBackgroundColor}"/>
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="30, Auto, *" ToolTip.Tip="{Binding TargetPath}">
+                                    <TextBlock Text="{Binding ShortcutKey}" FontWeight="Bold" VerticalAlignment="Center">
+                                        <TextBlock.Foreground>
+                                            <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).WorkspacePanel.IsWorkspaceListFocused"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor"/>
+                                            </MultiBinding>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    <Image Grid.Column="1" Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center">
+                                        <TextBlock.Foreground>
+                                            <MultiBinding Converter="{StaticResource ActiveInactiveColorConverter}">
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).WorkspacePanel.IsWorkspaceListFocused"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).RightColumnFileTextColor"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MiddleColumnFileTextColor"/>
+                                            </MultiBinding>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+            </Grid>
+        </Border>
+    </Grid>
+
+    <!-- Command Panel Overlay -->
+    <Border Background="#80000000" IsVisible="{Binding IsCommandPanelVisible}" ZIndex="960">
+        <Border Background="{Binding DialogBackgroundColor}" BorderBrush="{Binding DialogBorderColor}" BorderThickness="2" 
+                HorizontalAlignment="Center" VerticalAlignment="Center" 
+                Width="700" Height="250" CornerRadius="3" Padding="15" BoxShadow="0 4 10 0 #40000000"
+                MaxWidth="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}"
+                MaxHeight="{Binding Bounds.Height, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}">
+            <Grid RowDefinitions="Auto, *">
+                <TextBlock Text="Command Panel (Press letter to execute, Esc to Close)" FontWeight="Bold" Margin="0,0,0,10" FontSize="14" Foreground="{Binding DialogTextColor}"/>
+                
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding CommandPanel.Commands}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="3" Columns="5"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="5" Margin="3" Background="Transparent" CornerRadius="3">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                           Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogTextColor}">
+                                    <Run Text="{Binding PreShortcutText}"/><Run Text="{Binding ShortcutText}" FontWeight="Bold" TextDecorations="Underline" 
+                                         Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogIndexColor}"/><Run Text="{Binding PostShortcutText}"/>
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Border>
+    </Border>
+
+    <!-- Help Panel Overlay -->
+    <Border Background="#80000000" IsVisible="{Binding IsHelpPanelVisible}" ZIndex="970">
+        <Border Background="{Binding DialogBackgroundColor}" BorderBrush="{Binding DialogBorderColor}" BorderThickness="2" 
+                HorizontalAlignment="Center" VerticalAlignment="Center" 
+                Width="600" Height="500" CornerRadius="3" Padding="15" BoxShadow="0 4 10 0 #40000000"
+                MaxWidth="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}"
+                MaxHeight="{Binding Bounds.Height, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}">
+            <Grid RowDefinitions="Auto, *">
+                <TextBlock Text="{Binding HelpPanel.Title}" FontWeight="Bold" Margin="0,0,0,10" FontSize="16" Foreground="{Binding DialogTextColor}"/>
+                
+                <ListBox Grid.Row="1" ItemsSource="{Binding HelpPanel.Items}" SelectedItem="{Binding HelpPanel.SelectedItem}" Background="Transparent">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="10,5"/>
+                        </Style>
+                        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                            <Setter Property="Background" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedBackgroundColor}"/>
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="200, *">
+                                <TextBlock Text="{Binding Key}" FontWeight="Bold" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogIndexColor}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Description}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogTextColor}" TextWrapping="Wrap"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Border>
+
+    <!-- Dialog Overlay -->
+    <Grid Background="#80000000" 
+          IsVisible="{Binding IsDialogVisible}"
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch"
+          Panel.ZIndex="1000">
+        <ContentControl Content="{Binding ActiveDialog}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        MaxWidth="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}"
+                        MaxHeight="{Binding Bounds.Height, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource MultiplierConverter}, ConverterParameter=0.9}">
+            <ContentControl.DataTemplates>
+                <DataTemplate DataType="{x:Type vm:ConfirmationDialogViewModel}">
+                    <controls:ConfirmationDialog/>
+                </DataTemplate>
+            </ContentControl.DataTemplates>
+        </ContentControl>
+    </Grid>
+    </Panel>
+
+</Window>

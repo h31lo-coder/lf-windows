@@ -1,0 +1,209 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="using:LfWindows.Controls"
+        xmlns:models="using:LfWindows.Models"
+        xmlns:vm="using:LfWindows.ViewModels"
+        xmlns:converters="using:LfWindows.Converters"
+        xmlns:AvaloniaEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+        xmlns:AvaloniaEditEditing="clr-namespace:AvaloniaEdit.Editing;assembly=AvaloniaEdit"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="LfWindows.Views.PreviewWindow"
+        x:DataType="vm:PreviewWindowViewModel"
+        Title="{Binding Title}"
+        SystemDecorations="None"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        Topmost="{Binding IsTopMost}">
+
+    <Window.Resources>
+        <converters:BoolToBrushConverter x:Key="BoolToBrushConverter" TrueBrush="{DynamicResource SystemControlForegroundAccentBrush}" FalseBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        <StreamGeometry x:Key="PinFilledIcon">M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z</StreamGeometry>
+        <StreamGeometry x:Key="PinOutlineIcon">M12.8,22h-1.6v-6H6v-2l2-2V4H7V2h10v2h-1v8l2,2v2h-5.2V22z M14,4h-4v8.3l-1.7,1.7h7.4L14,12.3V4z</StreamGeometry>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="Window[SystemDecorations=None]">
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="Button.WindowControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <Style Selector="Button.WindowControl:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+        </Style>
+        
+        <!-- TextEditor Styles to hide caret but keep selection -->
+        <Style Selector="AvaloniaEdit|TextEditor">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <Style Selector="AvaloniaEdit|TextEditor /template/ AvaloniaEditEditing|TextArea">
+            <Setter Property="SelectionBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}"/>
+        </Style>
+
+        <!-- Rotation Controls Hover Effect -->
+        <Style Selector="Border#RotationControls">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border#ContentContainer:pointerover Border#RotationControls">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+
+        <Style Selector="Border#ContentContainer">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+        </Style>
+        <Style Selector="Border#ContentContainer.custom">
+            <Setter Property="Background" Value="{Binding CustomBackgroundColor}"/>
+        </Style>
+    </Window.Styles>
+
+    <Border Name="ContentContainer"
+            Classes.custom="{Binding UseCustomBackground}"
+            CornerRadius="8"
+            BoxShadow="0 4 20 0 #66000000"
+            ClipToBounds="True"
+            BorderThickness="{Binding BorderThickness}"
+            BorderBrush="{Binding BorderBrush}">
+        
+        <Grid>
+            <!-- Content Area -->
+            <ContentControl Name="PreviewContentControl" 
+                          Content="{Binding PreviewContent}"
+                          HorizontalAlignment="Stretch" 
+                          VerticalAlignment="Stretch">
+                <ContentControl.DataTemplates>
+                    <!-- 图片预览模板 -->
+                    <DataTemplate DataType="{x:Type models:ImagePreviewModel}">
+                        <LayoutTransformControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <LayoutTransformControl.LayoutTransform>
+                                <RotateTransform Angle="{Binding $parent[Window].((vm:PreviewWindowViewModel)DataContext).RotationAngle}"/>
+                            </LayoutTransformControl.LayoutTransform>
+                            <controls:ZoomBorder Stretch="Uniform" ZoomSpeed="1.2" 
+                                               PanButton="Left" EnablePan="True" EnableZoom="True"
+                                               HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Image Source="{Binding Image}" />
+                            </controls:ZoomBorder>
+                        </LayoutTransformControl>
+                    </DataTemplate>
+
+                    <!-- 代码/文本预览模板 -->
+                    <DataTemplate DataType="{x:Type models:CodePreviewModel}">
+                        <AvaloniaEdit:TextEditor Document="{Binding Document}"
+                                               SyntaxHighlighting="{Binding SyntaxHighlighting}"
+                                               IsReadOnly="True"
+                                               ShowLineNumbers="True"
+                                               FontFamily="{Binding $parent[Window].((vm:PreviewWindowViewModel)DataContext).FontFamily}"
+                                               FontSize="{Binding $parent[Window].((vm:PreviewWindowViewModel)DataContext).FontSize}"
+                                               WordWrap="True"
+                                               HorizontalScrollBarVisibility="Disabled"
+                                               VerticalScrollBarVisibility="Auto"
+                                               HorizontalAlignment="Stretch"
+                                               VerticalAlignment="Stretch"/>
+                    </DataTemplate>
+
+                    <!-- Markdown 预览模板 -->
+                    <DataTemplate DataType="{x:Type models:MarkdownPreviewModel}">
+                        <AvaloniaEdit:TextEditor Document="{Binding SourceDocument}"
+                                               SyntaxHighlighting="{Binding HighlightingDefinition}"
+                                               IsReadOnly="True"
+                                               ShowLineNumbers="True"
+                                               FontFamily="{Binding $parent[Window].((vm:PreviewWindowViewModel)DataContext).FontFamily}"
+                                               FontSize="{Binding $parent[Window].((vm:PreviewWindowViewModel)DataContext).FontSize}"
+                                               WordWrap="True"
+                                               HorizontalScrollBarVisibility="Disabled"
+                                               VerticalScrollBarVisibility="Auto"
+                                               HorizontalAlignment="Stretch"
+                                               VerticalAlignment="Stretch"/>
+                    </DataTemplate>
+
+                    <!-- 视频预览模板 -->
+                    <DataTemplate DataType="{x:Type models:VideoPreviewModel}">
+                        <controls:VideoPreviewControl DataContext="{Binding}" 
+                                                    RotationAngle="{Binding $parent[Window].((vm:PreviewWindowViewModel)DataContext).RotationAngle}"/>
+                    </DataTemplate>
+
+                    <!-- PDF/Docx 预览模板 -->
+                    <DataTemplate DataType="{x:Type models:PdfPreviewModel}">
+                        <controls:PdfPageView DataContext="{Binding $parent[Window].((vm:PreviewWindowViewModel)DataContext).CurrentPdfPage}" />
+                    </DataTemplate>
+
+                    <!-- Excel 预览模板 -->
+                    <DataTemplate DataType="{x:Type models:ExcelPreviewModel}">
+                        <controls:ExcelPreviewControl />
+                    </DataTemplate>
+
+                    <!-- Office (Word/PPT) Native/Fallback 预览模板 -->
+                    <DataTemplate DataType="{x:Type models:OfficePreviewModel}">
+                        <controls:OfficePreviewControl />
+                    </DataTemplate>
+
+                    <!-- 错误/文本信息模板 -->
+                    <DataTemplate DataType="{x:Type x:String}">
+                        <TextBlock Text="{Binding}" 
+                                 HorizontalAlignment="Center" 
+                                 VerticalAlignment="Center"
+                                 TextWrapping="Wrap"
+                                 Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+
+            <!-- Rotation Controls -->
+            <Border x:Name="RotationControls"
+                    VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,80" 
+                    Background="#80000000" CornerRadius="100" Padding="15,5"
+                    IsVisible="{Binding IsRotatable}">
+                <StackPanel Orientation="Horizontal" Spacing="20">
+                    <Button Command="{Binding RotateLeftCommand}" ToolTip.Tip="Rotate Left 90°" Classes="WindowControl">
+                        <TextBlock Text="↺" FontSize="24" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Button>
+                    <Button Command="{Binding RotateRightCommand}" ToolTip.Tip="Rotate Right 90°" Classes="WindowControl">
+                        <TextBlock Text="↻" FontSize="24" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- Pin Button Overlay -->
+            <Button HorizontalAlignment="Right" 
+                    VerticalAlignment="Top"
+                    Margin="10"
+                    Width="30" Height="30"
+                    CornerRadius="15"
+                    Background="#20808080" 
+                    Command="{Binding ToggleTopMostCommand}"
+                    ToolTip.Tip="Toggle Always on Top (Ctrl+T)">
+                <Button.Styles>
+                    <Style Selector="Button:pointerover">
+                        <Setter Property="Background" Value="#40808080"/>
+                    </Style>
+                </Button.Styles>
+                <PathIcon Width="12" Height="12"
+                          Foreground="{Binding IsTopMost, Converter={StaticResource BoolToBrushConverter}}"
+                          Classes.pinned="{Binding IsTopMost}">
+                    <PathIcon.Styles>
+                        <Style Selector="PathIcon">
+                            <Setter Property="Data" Value="{StaticResource PinOutlineIcon}"/>
+                        </Style>
+                        <Style Selector="PathIcon.pinned">
+                            <Setter Property="Data" Value="{StaticResource PinFilledIcon}"/>
+                        </Style>
+                    </PathIcon.Styles>
+                </PathIcon>
+            </Button>
+        </Grid>
+    </Border>
+</Window>

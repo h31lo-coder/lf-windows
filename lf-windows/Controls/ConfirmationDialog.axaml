@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LfWindows.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+             x:Class="LfWindows.Controls.ConfirmationDialog"
+             x:DataType="vm:ConfirmationDialogViewModel">
+    
+    <Border Background="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogBackgroundColor}" 
+            BorderBrush="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogBorderColor}"
+            BorderThickness="1"
+            CornerRadius="3"
+            Padding="20"
+            MaxWidth="500"
+            BoxShadow="0 0 20 5 #99000000">
+        <StackPanel Spacing="20">
+            <TextBlock Text="{Binding Title}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogTextColor}" FontWeight="Bold" FontSize="16"/>
+            <TextBlock Text="{Binding Message}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogTextColor}" TextWrapping="Wrap"/>
+            
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                <Button Content="Yes (y)" Command="{Binding ConfirmCommand}" Background="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogButtonBackgroundColor}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogButtonTextColor}"/>
+                <Button Content="No (n)" Command="{Binding CancelCommand}" Background="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogButtonBackgroundColor}" Foreground="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DialogButtonTextColor}"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

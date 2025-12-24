@@ -1,0 +1,61 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector="ScrollViewer">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid>
+                    <ScrollContentPresenter Name="PART_ContentPresenter"
+                                          Background="{TemplateBinding Background}"
+                                          Content="{TemplateBinding Content}"
+                                          Margin="{TemplateBinding Padding}">
+                        <ScrollContentPresenter.GestureRecognizers>
+                            <ScrollGestureRecognizer />
+                        </ScrollContentPresenter.GestureRecognizers>
+                    </ScrollContentPresenter>
+                    <ScrollBar Name="PART_HorizontalScrollBar"
+                             Orientation="Horizontal"
+                             AllowAutoHide="True"
+                             Height="10"
+                             VerticalAlignment="Bottom"/>
+                    <ScrollBar Name="PART_VerticalScrollBar"
+                             Orientation="Vertical"
+                             AllowAutoHide="True"
+                             Width="10"
+                             HorizontalAlignment="Right"/>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- 极简滚动条样式 -->
+    <Style Selector="ScrollBar">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#40808080"/>
+        <Setter Property="Opacity" Value="0.5"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="ScrollBar:pointerover">
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="Foreground" Value="#80808080"/>
+    </Style>
+    
+    <!-- 隐藏滚动条按钮 -->
+    <Style Selector="ScrollBar /template/ RepeatButton">
+        <Setter Property="IsVisible" Value="False"/>
+    </Style>
+    
+    <Style Selector="ScrollBar /template/ Thumb">
+        <Setter Property="Background" Value="{TemplateBinding Foreground}"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="4"/>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+</Styles>

@@ -1,0 +1,270 @@
+appearance:
+  theme: Dark
+  fontSize: 13
+  mainFontSize: 14
+  infoFontSize: 12
+  fontFamily: Ping Hei Pro Text
+  previewTextFontFamily: Ping Hei Pro Text
+  topBarFontSize: 14
+  topBarFontWeight: Normal
+  topBarFontFamily: Segoe UI
+  statusBarFontSize: 14
+  statusBarFontWeight: Normal
+  statusBarFontFamily: Segoe UI
+  separatorWidth: 1
+  commandLineFontSize: 13
+  commandLineFontFamily: FiraCode NFM
+  commandLineFontWeight: Normal
+  globalShowHotkey: Ctrl+OemTilde
+  columnRatio: 3,4,5
+  showIcons: true
+  isCompactMode: false
+  isFloatMode: true
+  showLineNumbers: true
+  smallWindowWidth: 1100
+  smallWindowHeight: 650
+  largeWindowWidth: 1300
+  largeWindowHeight: 800
+  darkTheme:
+    leftColumnColor: '#ff222222'
+    middleColumnColor: '#ff222222'
+    rightColumnColor: '#ff222222'
+    topBarBackgroundColor: '#ff222222'
+    topBarTextColor: '#ffaaaaaa'
+    statusBarBackgroundColor: '#ff222222'
+    statusBarTextColor: White
+    separatorColor: '#ff555555'
+    commandLineBackgroundColor: '#ff222222'
+    commandLineTextColor: White
+    commandLineSelectionBackgroundColor: '#0078D7'
+    floatingShadowColor: '#99000000'
+    leftColumnFileTextColor: '#ffbbbbbb'
+    leftColumnDirectoryTextColor: LightSkyBlue
+    middleColumnFileTextColor: White
+    middleColumnDirectoryTextColor: LightSkyBlue
+    middleColumnSelectedTextColor: '#ffeb7700'
+    middleColumnSelectedFontWeight: SemiBold
+    selectedBackgroundColor: '#ff0767b6'
+    rightColumnFileTextColor: '#ffbbbbbb'
+    rightColumnDirectoryTextColor: LightSkyBlue
+    markdownHeadingColor: '#ff61afef'
+    markdownCodeColor: '#ffd4d4d4'
+    markdownBlockQuoteColor: '#ffd4d4d4'
+    markdownLinkColor: '#ff4ec9b0'
+    markdownEmphasisColor: '#ffc678dd'
+    markdownStrongEmphasisColor: '#ffe06c75'
+    markdownImageColor: '#ff98c379'
+    codeBackgroundColor: '#ff222222'
+    codeTextColor: '#ffd4d4d4'
+    codeSelectionColor: '#ff264f78'
+    codeLineNumberColor: '#ff858585'
+    codeCommentColor: '#ff6a9955'
+    codeStringColor: '#ffce9178'
+    codeKeywordColor: '#ffffef5d'
+    codeNumberColor: '#ffb5cea8'
+    codeMethodColor: '#ffdcdcaa'
+    codeClassColor: '#ff4ec9b0'
+    codeVariableColor: '#ff9cdcfe'
+    codeOperatorColor: '#ffd4d4d4'
+    codeHtmlTagColor: '#ff569cd6'
+    codeCssPropertyColor: '#ff9cdcfe'
+    codeCssValueColor: '#ffce9178'
+    dialogBackgroundColor: '#333333'
+    dialogTextColor: '#FFFFFF'
+    dialogBorderColor: '#555555'
+    dialogButtonBackgroundColor: '#2D2D2D'
+    dialogButtonTextColor: '#FFFFFF'
+    dialogIndexColor: '#FFFF00'
+  lightTheme:
+    leftColumnColor: '#fff0f0f0'
+    middleColumnColor: '#fff0f0f0'
+    rightColumnColor: '#fff0f0f0'
+    topBarBackgroundColor: '#fff0f0f0'
+    topBarTextColor: '#ff333333'
+    statusBarBackgroundColor: '#fff0f0f0'
+    statusBarTextColor: Black
+    separatorColor: '#ffcccccc'
+    commandLineBackgroundColor: '#fff0f0f0'
+    commandLineTextColor: Black
+    commandLineSelectionBackgroundColor: '#ADD8E6'
+    floatingShadowColor: '#20000000'
+    leftColumnFileTextColor: '#ff555555'
+    leftColumnDirectoryTextColor: DarkBlue
+    middleColumnFileTextColor: Black
+    middleColumnDirectoryTextColor: DarkBlue
+    middleColumnSelectedTextColor: Black
+    middleColumnSelectedFontWeight: Bold
+    selectedBackgroundColor: '#ff60a8e3'
+    rightColumnFileTextColor: '#ff555555'
+    rightColumnDirectoryTextColor: DarkBlue
+    markdownHeadingColor: '#ffc5680b'
+    markdownCodeColor: '#ff24292e'
+    markdownBlockQuoteColor: '#ff22863a'
+    markdownLinkColor: '#ff4c8dd6'
+    markdownEmphasisColor: '#C678DD'
+    markdownStrongEmphasisColor: '#ff54282c'
+    markdownImageColor: '#98C379'
+    codeBackgroundColor: '#fff0f0f0'
+    codeTextColor: Black
+    codeSelectionColor: '#ffadd6ff'
+    codeLineNumberColor: '#ff237893'
+    codeCommentColor: Green
+    codeStringColor: '#ffa31515'
+    codeKeywordColor: '#ff0b70cc'
+    codeNumberColor: '#ff098658'
+    codeMethodColor: '#ff795e26'
+    codeClassColor: '#ff267f99'
+    codeVariableColor: '#ff222b66'
+    codeOperatorColor: Black
+    codeHtmlTagColor: Maroon
+    codeCssPropertyColor: Red
+    codeCssValueColor: '#ff0451a5'
+    dialogBackgroundColor: '#FFFFFF'
+    dialogTextColor: '#000000'
+    dialogBorderColor: '#CCCCCC'
+    dialogButtonBackgroundColor: '#CCCCCC'
+    dialogButtonTextColor: '#000000'
+    dialogIndexColor: '#005CC5'
+preview:
+  enabled: true
+  showHidden: false
+  wordWrap: false
+performance:
+  maxCacheSizeMb: 200
+  maxYankHistory: 10
+  enableOfficePreload: true
+homeDirectory: ''
+workspaceDirectoryName: Workspace
+bookmarks: {}
+keyBindings:
+  Normal.ScrollPreviewUp: Up
+  Normal.ScrollPreviewDown: Down
+  Normal.ScrollPreviewLeft: Left
+  Normal.ScrollPreviewRight: Right
+  Normal.MoveUp: k
+  Normal.MoveDown: j
+  Normal.MoveUpDir: h
+  Normal.Open: l
+  Normal.MoveToTop: gg
+  Normal.MoveToBottom: G
+  Normal.MoveToScreenTop: H
+  Normal.MoveToScreenMiddle: M
+  Normal.MoveToScreenBottom: L
+  Normal.ScrollHalfPageUp: Ctrl+U
+  Normal.ScrollHalfPageDown: Ctrl+D
+  Normal.ScrollPageUp: Ctrl+B
+  Normal.ScrollPageDown: Ctrl+F
+  Normal.EnterJumpMode: ;
+  Normal.EnterCommandMode: Shift+OemSemicolon
+  Normal.FindPrev: ','
+  Normal.FindNext: .
+  Normal.EnterSearchMode: /
+  Normal.EnterSearchBackMode: Shift+OemQuestion
+  Normal.SearchNext: =
+  Normal.SearchPrev: '-'
+  Normal.EnterFindMode: f
+  Normal.EnterFindBackMode: F
+  Normal.EnterBookmarkMode: m
+  Normal.JumpPrev: '['
+  Normal.JumpNext: ']'
+  Normal.ToggleVisualMode: V
+  Normal.ToggleSelection: Space
+  Normal.UnselectAll: u
+  Normal.InvertSelection: v
+  Normal.OpenPopupPreview: t
+  Normal.InitiateWorkspaceLink: wl
+  Normal.InitiateWorkspaceCreation: ws
+  Normal.ToggleWorkspacePanel: wo
+  Normal.OpenInExplorer: e
+  Normal.ExecuteCurrentItem: o
+  Normal.HideApplication: q
+  Normal.HandleEscape: Escape
+  Normal.SetHidden: zh
+  Normal.EnterFilterMode: i
+  Normal.SetDotfilesOnly: z.
+  Normal.SetReverse: zr
+  Normal.SetDirFirst: zd
+  Normal.SetInfoPerm: zp
+  Normal.SetInfo: zn
+  Normal.SetInfoSize: zs
+  Normal.SetInfoTime: zt
+  Normal.SetInfoSizeTime: za
+  Normal.SortNatural: sn
+  Normal.SortSize: ss
+  Normal.SortTime: st
+  Normal.SortAtime: sa
+  Normal.SortBtime: sb
+  Normal.SortCtime: sc
+  Normal.SortExt: se
+  Normal.YankSelection: y
+  Normal.CutSelection: x
+  Normal.PasteSelection: p
+  Normal.CreateLinkSelection: Ctrl+L
+  Normal.ShowYankHistory: P
+  Normal.RequestDelete: Delete,D
+  Normal.InitiateRename: r
+  Normal.RefreshAsync: F5
+  Normal.ClearActiveClipboard: c
+  Normal.InitiateNewFile: n
+  Normal.InitiateMakeDirectory: N
+  Visual.MoveUp: Up,k
+  Visual.MoveDown: Down,j
+  Visual.ToggleVisualMode: V
+  Visual.ExitVisualMode: Escape
+  Visual.ToggleSelection: Space
+  Visual.UnselectAll: u
+  Visual.YankSelection: y
+  Visual.CutSelection: x
+  Visual.RequestDelete: Delete,D
+  Visual.VisualChange: o
+  Workspace.SwitchWorkspaceFocus: Tab
+  Jump.SelectPrevBookmark: Up,k
+  Jump.SelectNextBookmark: Down,j
+  Jump.JumpToSelectedBookmark: Enter,Return
+  Jump.DeleteSelectedBookmark: Delete,c
+  Jump.ExitJumpMode: Escape
+  YankHistory.HideYankHistory: Escape
+  YankHistory.DeleteSelectedYankHistoryItem: c
+  YankHistory.ConfirmYankHistorySelection: Enter,Return,Space
+  YankHistory.SelectNextYankHistory: j,Down
+  YankHistory.SelectPrevYankHistory: k,Up
+  Normal.OpenCommandPanel: zz
+  Dialog.ConfirmDialog: y
+  Dialog.CancelDialog: n
+  Dialog.CancelDialogKeepSelection: Escape
+  Help.ScrollDown: j,Down
+  Help.ScrollUp: k,Up
+  Help.CloseHelpPanel: q,Escape
+  Normal.SetSmallWindow: Alt+D1,Alt+NumPad1
+  Normal.SetLargeWindow: Alt+D2,Alt+NumPad2
+  Normal.ToggleFullscreen: F11
+  Normal.GoHomeDirectory: gh
+  CommandPanel.CloseCommandPanel: Escape
+yankHistory: []
+sortBy: Natural
+sortReverse: false
+dirFirst: true
+showHidden: true
+showSystemHidden: false
+info: []
+infoTimeFormatNew: MM/dd HH:mm
+infoTimeFormatOld: MM/dd yyyy
+filterMethod: Text
+searchMethod: Text
+anchorFind: true
+commandPanelActions:
+- settings
+- dark
+- light
+- go-home
+- set-home
+- wrap
+- line
+- compact
+- float
+- icon
+- small
+- large
+- preview
+- open-terminal
+- quit

@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="using:LfWindows.Models"
+             xmlns:controls="using:LfWindows.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="LfWindows.Controls.ExcelPreviewControl"
+             x:DataType="models:ExcelPreviewModel"
+             x:Name="Root">
+    
+    <UserControl.Styles>
+        <Style Selector="Slider.Compact">
+            <Setter Property="MinHeight" Value="20"/>
+        </Style>
+        <Style Selector="Slider.Compact /template/ Thumb">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Top Bar with Zoom Slider Centered -->
+        <Grid ColumnDefinitions="*" Margin="0,5,0,10">
+             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                 <!-- Zoom Out Button -->
+                 <Button Name="ZoomOutButton" Width="24" Height="24" Padding="0" Margin="0,0,10,0" VerticalAlignment="Center">
+                     <PathIcon Data="M19,13H5V11H19V13Z"
+                               Width="10" Height="10" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                 </Button>
+                 
+                 <Slider Classes="Compact" Width="150" Minimum="0.5" Maximum="2.0" Value="{Binding ZoomLevel, ElementName=Root}" VerticalAlignment="Center"/>
+                 
+                 <!-- Zoom In Button -->
+                 <Button Name="ZoomInButton" Width="24" Height="24" Padding="0" Margin="10,0,0,0" VerticalAlignment="Center">
+                     <PathIcon Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+                               Width="10" Height="10" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                 </Button>
+             </StackPanel>
+        </Grid>
+
+        <TabControl Grid.Row="1" ItemsSource="{Binding Sheets}" SelectedItem="{Binding SelectedSheet}" Padding="0">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding TableName}" FontSize="14" FontWeight="Bold" Margin="0,0,0,2"/>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <LayoutTransformControl VerticalAlignment="Top" HorizontalAlignment="Left">
+                            <LayoutTransformControl.LayoutTransform>
+                                 <ScaleTransform ScaleX="{Binding ZoomLevel, RelativeSource={RelativeSource AncestorType=controls:ExcelPreviewControl}}" 
+                                                 ScaleY="{Binding ZoomLevel, RelativeSource={RelativeSource AncestorType=controls:ExcelPreviewControl}}"/>
+                            </LayoutTransformControl.LayoutTransform>
+                            <controls:SheetView DataContext="{Binding}"/>
+                        </LayoutTransformControl>
+                    </ScrollViewer>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+        </TabControl>
+    </Grid>
+</UserControl>

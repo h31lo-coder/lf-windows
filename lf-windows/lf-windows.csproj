@@ -1,0 +1,82 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Show console in Debug to see logs; keep WinExe in Release -->
+    <OutputType Condition="'$(Configuration)'=='Debug'">Exe</OutputType>
+    <OutputType Condition="'$(Configuration)'!='Debug'">WinExe</OutputType>
+    <AssemblyName>lf-windows</AssemblyName>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <SupportedOSPlatform>windows</SupportedOSPlatform>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>Assets\avalonia-logo.ico</ApplicationIcon>
+    <NoWarn>$(NoWarn);NU1902;NU1701</NoWarn>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <AvaloniaResource Include="Assets\**" Exclude="**\*.axaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaXaml Update="**/*.axaml" />
+    <Compile Update="App.axaml.cs">
+      <DependentUpon>App.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.9" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.9" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.9">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Docnet.Core" Version="2.6.0" />
+    <PackageReference Include="ExcelDataReader" Version="3.8.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
+    <PackageReference Include="LibVLCSharp.Avalonia" Version="3.9.5" />
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.10.0" />
+    <PackageReference Include="MetadataExtractor" Version="2.9.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="NetOfficeFw.Excel" Version="1.9.7" />
+    <PackageReference Include="NetOfficeFw.PowerPoint" Version="1.9.7" />
+    <PackageReference Include="NetOfficeFw.Word" Version="1.9.7" />
+    <PackageReference Include="SharpCompress" Version="0.42.1" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.1" />
+    <PackageReference Include="TinyPinyin.Net" Version="1.0.2" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\lf-watcher\lf-watcher.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- 
+  <Target Name="CopyWatcher" AfterTargets="Build">
+    <ItemGroup>
+      <WatcherFiles Include="..\lf-watcher\bin\$(Configuration)\$(TargetFramework)\lf-watcher.exe" />
+      <WatcherFiles Include="..\lf-watcher\bin\$(Configuration)\$(TargetFramework)\lf-watcher.dll" />
+      <WatcherFiles Include="..\lf-watcher\bin\$(Configuration)\$(TargetFramework)\lf-watcher.runtimeconfig.json" />
+      <WatcherFiles Include="..\lf-watcher\bin\$(Configuration)\$(TargetFramework)\lf-watcher.deps.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(WatcherFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target> 
+  -->
+</Project>
