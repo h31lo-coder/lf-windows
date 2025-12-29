@@ -4,7 +4,8 @@
 
 ## 1. Introduction
 `lf-windows` is a modern terminal file manager designed for Windows 11, replicating the core experience of `lf` and deeply optimized for the Windows desktop environment. It adopts keyboard-first operation logic combined with Vim-style keybindings, aiming to provide an efficient and immersive file management experience.
-
+<img width="748" height="523" alt="lf-windows0" src="https://github.com/user-attachments/assets/c6258bc5-18a4-4d80-8f78-9af91d13e885" />
+<img width="748" height="523" alt="lf-windows1" src="https://github.com/user-attachments/assets/51e1dd1d-c1df-461a-b0e6-4cf9cd2f2009" />
 ## 2. Core Interface
 The interface uses a classic three-column layout (Miller Columns):
 - **Left Column (Parent)**: Displays the contents of the parent directory.
