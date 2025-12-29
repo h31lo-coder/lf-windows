@@ -4,7 +4,8 @@
 
 ## 1. 简介
 `lf-windows` 是一款专为 Windows 11 设计的现代终端文件管理器，复刻了 `lf` 的核心体验，并针对 Windows 桌面环境进行了深度优化。它采用键盘优先的操作逻辑，结合了 Vim 风格的快捷键，旨在提供高效、沉浸式的文件管理体验。
-
+<img width="748" height="523" alt="lf-windows0" src="https://github.com/user-attachments/assets/b1be7459-c509-4f5e-86cf-ae777d666960" />
+<img width="748" height="523" alt="lf-windows1" src="https://github.com/user-attachments/assets/e6d0f018-4298-43eb-b1c8-b70dcfc6b703" />
 ## 2. 核心界面
 界面采用经典的三栏布局（Miller Columns）：
 - **左栏 (Parent)**: 显示当前目录的父级目录内容。
